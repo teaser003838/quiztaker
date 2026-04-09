@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════
+     EDIT ONLY THESE 3 LINES:
+  ═══════════════════════════════ */
+
+  /* ═══════════════════════════════
+     DO NOT EDIT BELOW THIS LINE
+  ═══════════════════════════════ */
+
+  :root {
+    --bg: #0d0d14;
+    --card: #13131e;
+    --border: #1f1f30;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --success: #10b981;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.12), transparent),
+      radial-gradient(ellipse 50% 40% at 90% 90%, rgba(6,182,212,0.07), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ══════════════════════════════
+     SETUP SCREEN
+  ══════════════════════════════ */
+  #setup {
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.25rem;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    color: var(--accent);
+  }
+
+  .brand span { color: var(--accent2); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.1);
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-title span { color: var(--accent); }
+
+  .card-sub {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  .field { margin-bottom: 1.1rem; }
+
+  label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.45rem;
+  }
+
+  input, select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.2);
+  }
+
+  select { cursor: pointer; }
+  select option { background: #1a1a2e; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .btn-start {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-start::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  }
+
+  .btn-start:hover { background: #6d28d9; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+  .btn-start:active { transform: translateY(0); }
+
+  .info-box {
+    margin-top: 1.25rem;
+    padding: 0.9rem 1rem;
+    background: rgba(6,182,212,0.05);
+    border: 1px solid rgba(6,182,212,0.15);
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    line-height: 1.6;
+  }
+
+  .info-box strong { display: block; margin-bottom: 0.25rem; }
+
+  /* ══════════════════════════════
+     QUIZ SCREEN
+  ══════════════════════════════ */
+  #quiz { flex-direction: column; }
+
+  .quiz-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,13,20,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .quiz-title-bar {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 55%;
+  }
+
+  .timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 0.4rem 0.9rem;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .timer-wrap.warn { border-color: var(--warn); background: rgba(245,158,11,0.1); }
+  .timer-wrap.danger { border-color: var(--danger); background: rgba(239,68,68,0.1); animation: pulse 1s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .timer-icon { font-size: 0.85rem; }
+
+  #timer-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    min-width: 52px;
+    text-align: center;
+    transition: color 0.3s;
+  }
+
+  .timer-wrap.warn #timer-display { color: var(--warn); }
+  .timer-wrap.danger #timer-display { color: var(--danger); }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 1s linear, background 0.5s;
+    width: 100%;
+  }
+
+  .form-container {
+    flex: 1;
+    position: relative;
+  }
+
+  #form-iframe {
+    width: 100%;
+    height: calc(100vh - 60px);
+    border: none;
+    background: white;
+  }
+
+  /* ══════════════════════════════
+     TIMEOUT OVERLAY
+  ══════════════════════════════ */
+  #timeout-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(10,10,15,0.97);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(20px);
+  }
+
+  #timeout-overlay.show { display: flex; animation: fadeIn 0.5s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+  .timeout-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: bounce 1s ease infinite alternate;
+  }
+
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+
+  .timeout-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--danger);
+    margin-bottom: 0.75rem;
+  }
+
+  .timeout-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: 320px;
+    margin-bottom: 2rem;
+  }
+
+  .btn-secondary {
+    padding: 0.85rem 2rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { background: var(--card); border-color: var(--accent); }
+
+  /* ══════════════════════════════
+     ERROR
+  ══════════════════════════════ */
+  .error-msg {
+    display: none;
+    color: var(--danger);
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    padding-left: 0.25rem;
+  }
+
+  .error-msg.show { display: block; }
+
+  /* Mobile tweaks */
+  @media (max-width: 380px) {
+    .card { padding: 1.5rem 1.25rem; }
+    .card-title { font-size: 1.5rem; }
+    .row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SETUP SCREEN
+══════════════════════════════ -->
+<div id="setup" class="screen active">
+  <div class="brand">Quiz<span>Host</span></div>
+
+  <div class="card">
+    <h1 class="card-title">Launch Your<br><span>Timed Quiz</span></h1>
+    <p class="card-sub">Paste your Google Form ID and set the timer. Share the link with your students.</p>
+
+    <div class="field">
+      <label>Google Form ID</label>
+      <input type="text" id="form-id" placeholder="1FAIpQLSd...paste full ID here" autocomplete="off" spellcheck="false">
+      <span class="error-msg" id="form-error">Please enter a valid Form ID</span>
+    </div>
+
+    <div class="field">
+      <label>Quiz Title (shown to students)</label>
+      <input type="text" id="quiz-title" placeholder="e.g. Medical Science — Chapter 3" value="">
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Duration</label>
+        <select id="timer-minutes">
+          <option value="5">5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="20">20 minutes</option>
+          <option value="25">25 minutes</option>
+          <option value="30" selected>30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">60 minutes</option>
+          <option value="90">90 minutes</option>
+          <option value="120">120 minutes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Warning at</label>
+        <select id="warn-minutes">
+          <option value="1">1 min left</option>
+          <option value="2">2 min left</option>
+          <option value="5" selected>5 min left</option>
+          <option value="10">10 min left</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn-start" onclick="startQuiz()">▶ &nbsp; Start Quiz</button>
+
+    <div class="info-box">
+      <strong>📋 Where to find your Form ID?</strong>
+      Open your Google Form edit link. Copy the long text between <b>/d/</b> and <b>/viewform</b> in the URL. That's your Form ID.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     QUIZ SCREEN
+══════════════════════════════ -->
+<div id="quiz" class="screen">
+  <div class="quiz-bar">
+    <div class="quiz-title-bar" id="quiz-title-bar">Quiz</div>
+    <div class="timer-wrap" id="timer-wrap">
+      <span class="timer-icon">⏱</span>
+      <div id="timer-display">00:00</div>
+    </div>
+  </div>
+
+  <div class="progress-bar">
+    <div id="progress-fill"></div>
+  </div>
+
+  <div class="form-container">
+    <iframe id="form-iframe" src="" allowfullscreen></iframe>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TIMEOUT OVERLAY
+══════════════════════════════ -->
+<div id="timeout-overlay">
+  <div class="timeout-icon">⏰</div>
+  <div class="timeout-title">Time's Up!</div>
+  <p class="timeout-sub">
+    Your quiz time has ended.<br>
+    If you haven't submitted yet, please submit your answers now before the form closes.
+  </p>
+  <button class="btn-secondary" onclick="resetToSetup()">← Back to Setup</button>
+</div>
+
+<script>
+  let timerInterval = null;
+  let totalSeconds = 0;
+  let remainingSeconds = 0;
+  let warnThreshold = 300;
+
+  function startQuiz() {
+    const formId = document.getElementById('form-id').value.trim();
+    const title = document.getElementById('quiz-title').value.trim() || 'Quiz';
+    const minutes = parseInt(document.getElementById('timer-minutes').value);
+    const warnMins = parseInt(document.getElementById('warn-minutes').value);
+
+    // Validate
+    if (!formId || formId.length < 10) {
+      const err = document.getElementById('form-error');
+      err.classList.add('show');
+      document.getElementById('form-id').focus();
+      return;
+    }
+    document.getElementById('form-error').classList.remove('show');
+
+    // Set up
+    totalSeconds = minutes * 60;
+    remainingSeconds = totalSeconds;
+    warnThreshold = warnMins * 60;
+
+    // Load form
+    const embedUrl = `https://docs.google.com/forms/d/${formId}/viewform?embedded=true`;
+    document.getElementById('form-iframe').src = embedUrl;
+    document.getElementById('quiz-title-bar').textContent = title;
+
+    // Switch screens
+    document.getElementById('setup').classList.remove('active');
+    document.getElementById('quiz').classList.add('active');
+
+    // Start timer
+    updateTimerDisplay();
+    timerInterval = setInterval(tick, 1000);
+  }
+
+  function tick() {
+    remainingSeconds--;
+
+    if (remainingSeconds <= 0) {
+      remainingSeconds = 0;
+      clearInterval(timerInterval);
+      updateTimerDisplay();
+      showTimeout();
+      return;
+    }
+
+    updateTimerDisplay();
+
+    // Update progress bar
+    const pct = (remainingSeconds / totalSeconds) * 100;
+    const fill = document.getElementById('progress-fill');
+    fill.style.width = pct + '%';
+
+    // Color states
+    const wrap = document.getElementById('timer-wrap');
+    if (remainingSeconds <= 60) {
+      wrap.className = 'timer-wrap danger';
+      fill.style.background = 'var(--danger)';
+    } else if (remainingSeconds <= warnThreshold) {
+      wrap.className = 'timer-wrap warn';
+      fill.style.background = 'linear-gradient(90deg, var(--warn), var(--danger))';
+    }
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(remainingSeconds / 60);
+    const s = remainingSeconds % 60;
+    document.getElementById('timer-display').textContent =
+      String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function showTimeout() {
+    document.getElementById('timeout-overlay').classList.add('show');
+  }
+
+  function resetToSetup() {
+    clearInterval(timerInterval);
+    document.getElementById('timeout-overlay').classList.remove('show');
+    document.getElementById('quiz').classList.remove('active');
+    document.getElementById('setup').classList.add('active');
+    document.getElementById('form-iframe').src = '';
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('progress-fill').style.background = 'linear-gradient(90deg, var(--accent), var(--accent2))';
+    document.getElementById('timer-wrap').className = 'timer-wrap';
+  }
+</script>
+</body>
+</html>
